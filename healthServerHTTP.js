@@ -14,27 +14,26 @@ const dbHandler = require('./database/dbHandler.js');
 const server = http.createServer((request, response) => {
 
     // Parsing the URL of received query
-    let incomingUrl = url.parse(request.url, true);
+    let incomingUrl = new URL(request.url, 'https://example.org/');
 
     // Determining the type of query
     let group = incomingUrl.pathname.substring(1);
-    let actionId = incomingUrl.query.action_id;
+    let actionId = incomingUrl.searchParams.get('action_id');
     
     if (request.method == 'GET') {
 
-        // TODO: Process requests with other parameter types (registration)
+        // Putting all other URL parameters into the array
+        let params = [];
 
-        // Getting the user id
-        let userId = parseInt(incomingUrl.query.user_id);
+        incomingUrl.searchParams.forEach((value) => {
+            params.push(value);
+        });
+
+        params.shift();        // Removing the 'action_id' parameter
 
         // Forming the task and executing it
-        let task = null;
-        if (userId) {
-            task = formTask(group, actionId, [userId], response);
-        }
-        else {
-            task = formTask(group, actionId, [], response);
-        }
+        task = formTask(group, actionId, params, response);
+        
         asyncQueue.addTask(task);
 
     }

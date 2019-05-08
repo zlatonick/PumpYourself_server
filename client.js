@@ -2,41 +2,167 @@
 // Debug module. Is used for tests
 
 const http = require('http');
+const fs = require('fs');
 
 
-function getAddUserQuery(name) {
-    return JSON.stringify({
-        action: 0,       // Add user
-        args: [name]
+function getImage(path, cb) {
+    fs.readFile(path, (err, res) => {
+        
+        if (err) cb(err);
+
+        cb(null, res);       // Transforming buffer into array
     });
 }
 
 
-function addTraining() {
+function saveImage(path, image, cb) {
+    fs.writeFile(path, Buffer.from(image.data), (err) => {
+        cb(err);
+    });
+}
 
-    let post_data = JSON.stringify([{
-        name: 'Running training',
-        description: 'Helps to keep fit',
-        days: [
-            {day_number: 1, day_plan: 'Run 1 km'},
-            {day_number: 2, day_plan: 'Run 2 km'},
-            {day_number: 3, day_plan: 'Run 3 km'},
-            {day_number: 4, day_plan: 'Run 4 km'},
-        ]
-    }]);
+
+function getAllMeal() {
+
+    let get_options = {
+        host: 'localhost',
+        port: '8080',
+        path: '/meal?action_id=0&user_id=1&start_date=2017-08-10T12:45:54&end_date=2019-08-10T12:45:54',
+        method: 'GET'
+    };
+
+    // Set up the request
+    let get_req = http.request(get_options, (res) => {
+        
+        let res_data = '';
+
+        res.on('data', (chunk) => {
+            res_data += chunk;
+        });
+
+        res.on('end', () => {
+
+            response = JSON.parse(res_data);
+
+            //console.log(response);
+
+            console.log('Days:');
+            console.dir(response.days);
+
+            console.log('Dishes:');
+            console.dir(response.dishes);
+
+            // Writing only first image
+            /*saveImage('./response/image.png', response.photos['1_2019-07-08'], (err) => {
+                
+                if (err) throw err;
+
+                console.log('Image was saved successfully');
+            });*/
+        });
+    });
+
+    get_req.end();
+}
+
+
+function addMeal() {
+
+    getImage('./photo.png', (err, image) => {
+
+        if (err) throw err;
+
+        let post_body = [
+            1,
+            '2019-07-08T12:45:54',
+            {
+                name: 'Buckwheat',
+                weight: 22.4,
+                photo: image,
+                proteins: 80,
+                fats: 90,
+                carbohydrates: 100,
+                calories: 110
+            }
+        ];
+
+        let post_options = {
+            host: 'localhost',
+            port: '8080',
+            path: '/meal?action_id=1',
+            method: 'POST'
+        };
+    
+        // Set up the request
+        let post_req = http.request(post_options, function(res) {
+            res.setEncoding('utf8');
+            res.on('data', function (chunk) {
+                console.log('Response: ' + chunk);
+            });
+        });
+    
+        // post the data
+        post_req.write(JSON.stringify(post_body));
+        post_req.end();
+    });    
+}
+
+
+function editMeal() {
+    getImage('./new_photo.png', (err, image) => {
+
+        if (err) throw err;
+
+        let post_body = [
+            1,
+            9,
+            '2017-11-25T12:45:54',
+            {
+                name: 'Soup',
+                weight: 17.5,
+                photo: image,
+                proteins: 55,
+                fats: 13,
+                carbohydrates: 70,
+                calories: 95
+            }
+        ];
+
+        let post_options = {
+            host: 'localhost',
+            port: '8080',
+            path: '/meal?action_id=2',
+            method: 'POST'
+        };
+    
+        // Set up the request
+        let post_req = http.request(post_options, function(res) {
+            res.setEncoding('utf8');
+            res.on('data', function (chunk) {
+                console.log('Response: ' + chunk);
+            });
+        });
+    
+        // post the data
+        post_req.write(JSON.stringify(post_body));
+        post_req.end();
+    });  
+}
+
+
+function deleteMeal() {
+    
+    let post_body = [6];
 
     let post_options = {
         host: 'localhost',
         port: '8080',
-        path: '/trainings?action_id=2',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
+        path: '/meal?action_id=3',
+        method: 'POST'
     };
 
     // Set up the request
-    var post_req = http.request(post_options, function(res) {
+    let post_req = http.request(post_options, function(res) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
             console.log('Response: ' + chunk);
@@ -44,79 +170,12 @@ function addTraining() {
     });
 
     // post the data
-    post_req.write(post_data);
-    post_req.end();
-
-}
-
-
-function startTraining() {
-
-    let post_data = JSON.stringify([25, 11]);
-
-    let post_options = {
-        host: 'localhost',
-        port: '8080',
-        path: '/trainings?action_id=3',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    };
-
-    // Set up the request
-    var post_req = http.request(post_options, function(res) {
-        res.setEncoding('utf8');
-        res.on('data', function (chunk) {
-            console.log('Response: ' + chunk);
-        });
-    });
-
-    // post the data
-    post_req.write(post_data);
-    post_req.end();
-
-}
-
-
-function main() {
-
-    // Build the post string from an object
-    //let post_data = getGetAllFoodRequest(25);
-    //let post_data = getAddUserQuery("peter");
-    /*let post_data = getAddEatingQuery(25, '2018.07.11', {
-        name: 'Soup',
-        weight: 22.4,
-        proteins: 7.6,
-        fats: 2.0,
-        carbohydrates: 1.45,
-        calories: 6.8
-    });*/
-
-    // An object of options to indicate where to post to
-    let post_options = {
-        host: 'localhost',
-        port: '8080',
-        path: '/trainings?action_id=0',
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    };
-
-    // Set up the request
-    var post_req = http.request(post_options, function(res) {
-        res.setEncoding('utf8');
-        res.on('data', function (chunk) {
-            console.log('Response: ' + chunk);
-        });
-    });
-
-    // post the data
-    //post_req.write(post_data);
+    post_req.write(JSON.stringify(post_body));
     post_req.end();
 }
 
 
-main();
-//startTraining();
+getAllMeal();
+//addMeal();
+//editMeal();
+//deleteMeal();

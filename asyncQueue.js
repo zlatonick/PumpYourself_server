@@ -35,10 +35,10 @@ class AsyncQueue {
             return;
         }
     
-        task.action(...task.args, (err, res) => {
+        task.action(...task.args, (err, ...res) => {
     
             if (task.callback) {
-                task.callback(err, res);
+                task.callback(err, ...res);
             }
     
             // Removing the task from queue

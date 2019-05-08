@@ -1,4 +1,12 @@
 
+/*
+ * Module provides functions for processing group requests
+ */
+
+exports.getAllGroups = getAllGroups;
+exports.addGroup = addGroup;
+exports.inviteFriendIntoGroup = inviteFriendIntoGroup;
+exports.leaveTheGroup = leaveTheGroup;
 
 function getAllGroups(connection, user_id, cb) {
 
@@ -49,7 +57,56 @@ function getAllGroups(connection, user_id, cb) {
 }
 
 
+// Adding with training_id. Needs to add training first
 function addGroup(connection, user_id, group_name, training_id, cb) {
 
-    let queryString = "INSERT INTO training_groups()"
+    // Adding the group
+    let queryString = "INSERT INTO training_groups(Group_name, Training_id) VALUES(?, ?)";
+
+    connection.query(queryString, [group_name, training_id], (err, res) => {
+
+        if (err) cb(err);
+
+        // Adding the user to group
+        let queryString = "INSERT INTO Groups_users(User_id, Group_id) VALUES(?, ?)";
+
+        connection.query(queryString, [user_id, res.insertId], (err, res) => {
+            cb(err, res.insertId);
+        });
+    });
+}
+
+
+// Edit group parameters (no training parameters)
+// group - {group_id, new_name, new_photo}
+function editGroup(connection, group, cb) {
+
+    let queryString = "UPDATE Training_groups SET Group_name = ?, Group_photo = ? "
+        + "WHERE Group_id = ?";
+
+    connection.query(queryString, [group.new_name, group.new_photo, group.group_id],
+        (err, res) => {
+        cb(err, null);      // Without the result
+    });
+}
+
+
+function inviteFriendIntoGroup(connection, user_id, friend_id, group_id, cb) {
+
+    let queryString = "INSERT INTO Groups_requests(User_id_from, User_id_to, "
+        + "Group_id) VALUES(?, ?, ?)";
+
+    connection.query(queryString, [user_id, friend_id, group_id], (err, res) => {
+        cb(err, null);      // Without the result
+    });
+}
+
+
+function leaveTheGroup(connection, user_group_id, cb) {
+
+    let queryString = "DELETE FROM Groups_users WHERE User_group_id = ?";
+
+    connection.query(queryString, [user_group_id], (err, res) => {
+        cd(err, null);
+    });
 }
