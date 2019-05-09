@@ -8,6 +8,7 @@ const fs = require('fs');
 
 exports.getImage = getImage;
 exports.saveImage = saveImage;
+exports.createStandardImage = createStandardImage;
 
 
 function getPath(category, id) {
@@ -28,6 +29,14 @@ function getImage(category, id, cb) {
 
 function saveImage(category, id, image, cb) {
     fs.writeFile(getPath(category, id), Buffer.from(image.data), (err) => {
+        cb(err);
+    });
+}
+
+
+// Copying the standard image and saving it as the image of dish/group/user
+function createStandardImage(category, id, cb) {
+    fs.copyFile(getPath(category, 'standard'), getPath(category, id), (err) => {
         cb(err);
     });
 }

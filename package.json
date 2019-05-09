@@ -7,10 +7,10 @@
     "start": "node -r dotenv/config healthServerHTTP.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Zlatonik",
+  "author": "Zlatonick",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^8.0.0",
-    "mysql": "^2.17.1"
+    "mysql": "github:mysqljs/mysql"
   }
 }

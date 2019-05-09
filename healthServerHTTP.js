@@ -5,7 +5,6 @@
  */
 
 const http = require('http');
-const url = require('url');
 
 const asyncQueue = require('./asyncQueue.js').createQueue();
 const dbHandler = require('./database/dbHandler.js');

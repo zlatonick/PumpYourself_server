@@ -10,6 +10,8 @@ const mysql = require("mysql");
 // Sub-modules
 const foodHandler = require("./foodHandler.js");
 const trainingsHandler = require("./trainingsHandler.js");
+const groupsHandler = require("./groupsHandler.js");
+const profileHandler = require("./profileHandler.js");
 
 
 // Exporting the interface
@@ -48,6 +50,19 @@ var actions = {
         2: trainingsHandler.createTraining,
         3: trainingsHandler.startTraining,
         4: trainingsHandler.stopTraining
+    },
+    profile: {
+        0: profileHandler.getProfileInfo,
+        1: profileHandler.getFriendInfo,
+        2: profileHandler.searchUser,
+        3: profileHandler.addNewUser,
+        4: profileHandler.changeProfileInfo,
+        5: profileHandler.acceptGroupRequest,
+        6: profileHandler.declineGroupRequest,
+        7: profileHandler.acceptFriendRequest,
+        8: profileHandler.declineFriendRequest,
+        9: profileHandler.sendFriendRequest,
+        10: profileHandler.removeFriend,
     }
 }
 
