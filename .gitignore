@@ -1,0 +1,4 @@
+/.env
+/node_modules/
+/test_images/
+/client.js

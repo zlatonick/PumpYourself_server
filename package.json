@@ -1,0 +1,16 @@
+{
+  "name": "pumpyourself",
+  "version": "1.0.0",
+  "description": "",
+  "main": "healthServerHTTP.js",
+  "scripts": {
+    "start": "node -r dotenv/config healthServerHTTP.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Zlatonik",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.0.0",
+    "mysql": "^2.17.1"
+  }
+}
