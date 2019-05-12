@@ -283,28 +283,45 @@ function searchUser(connection, input_phrase, cb) {
 
 function addNewUser(connection, user_info, cb) {
 
-    let queryString = "INSERT INTO Users(Login, Password, User_name, User_status) "
-        + "VALUES(?, ?, ?, ?)";
+    // Checking if the login already exists
+    let checkString = "SELECT COUNT(*) AS quan FROM Users WHERE Login = ?";
 
-    connection.query(queryString, [user_info.login, user_info.password,
-        user_info.name, user_info.status], (err, res) => {
+    connection.query(checkString, [user_info.login], (err, res) => {
 
-        if (err) cb(err);
+        if (err) {
+            cb(err);
+        }
 
-        let user_id = res.insertId;
+        if (res[0].quan > 0) {
+            cb("Login already exists");
+        }
+        else {
 
-        // Processing the photo
-        if (user_info.photo) {            
-            images.saveImage('users', user_id, user_info.photo, (err) => {
-                cb(err, user_id);
+            // Inserting the user
+            let queryString = "INSERT INTO Users(Login, Password, User_name, User_status) "
+                + "VALUES(?, ?, ?, ?)";
+
+            connection.query(queryString, [user_info.login, user_info.password,
+                user_info.name, user_info.status], (err, res) => {
+
+                if (err) cb(err);
+
+                let user_id = res.insertId;
+
+                // Processing the photo
+                if (user_info.photo) {            
+                    images.saveImage('users', user_id, user_info.photo, (err) => {
+                        cb(err, user_id);
+                    });
+                }
+                else {            
+                    images.createStandardImage('users', user_id, (err) => {
+                        cb(err, user_id);
+                    });
+                }
             });
         }
-        else {            
-            images.createStandardImage('users', user_id, (err) => {
-                cb(err, user_id);
-            });
-        }
-    });
+    });    
 }
 
 
@@ -342,11 +359,8 @@ function acceptGroupRequest(connection, user_id, group_id, cb) {
 
         let queryString = "INSERT INTO Groups_users(User_ID, Group_ID) VALUES(?, ?)";
     
-        connection.query(queryString, [user_id, group_id], (err, res) => {
-            
-            if (err) cb(err);
-
-            cb(null, res.insertId);
+        connection.query(queryString, [user_id, group_id], (err) => {
+            cb(err);
         });
     });    
 }

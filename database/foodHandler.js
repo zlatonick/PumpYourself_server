@@ -6,23 +6,13 @@
 // TODO: Standard food
 
 const images = require('./dbImagesHandler.js');
+const dates = require('./dateHandler.js');
 const asyncQueueFactory = require('../asyncQueue.js');
 
 exports.getAllFood = getAllFood;
 exports.addEating = addEating;
 exports.editEating = editEating;
 exports.deleteEating = deleteEating;
-
-
-// Parse the datetime, extract the date and return as string YYYY-MM-DD
-function getDay(date) {
-    return date.toISOString().substring(0, 10);
-}
-
-// Parse the datetime and return as string YYYY-MM-DDTHH:MM:SS
-function getDateTime(date) {
-    return date.toISOString().substring(0, 19);
-}
 
 
 // Check if two dish objects are equal
@@ -36,7 +26,7 @@ function checkDishesEquality(dish1, dish2) {
 
 
 // Get all eatings data of the user for the period (including borders)
-// date: YYYY-MM-DDTHH:MM:SS
+// date: YYYY-MM-DDTHHMMSS
 function getAllFood(connection, user_ID, start_date, end_date, cb) {
 
     // Selecting all the eatings of the user
@@ -62,13 +52,13 @@ function getAllFood(connection, user_ID, start_date, end_date, cb) {
         for (line of res) {
             
             // Day of eating
-            let currDate = getDay(line['Eating_date']);
+            let currDate = dates.getDay(line['Eating_date']);
 
             // Fact of eating
             let currEating = {id: line['User_dish_ID'],
                               id_food: line['Dish_ID'],
                               id_photo: line['Photo_ID'],
-                              date_time: getDateTime(line['Eating_date']),
+                              date_time: dates.getDateTime(line['Eating_date']),
                               weight: line['Weight']};
 
             // Adding the eating to the array of certain day
@@ -141,7 +131,7 @@ function getAllPublicFood(connection, cb) {
 function insertIntoDishesEats(connection, user_ID, dish_ID, weight, date, photo_ID, cb) {
 
     let queryString = "INSERT INTO Dishes_eats(User_ID, Dish_ID, Weight, Eating_date, Photo_ID) "
-        + "VALUES(?, ?, ?, DATE(?), ?)";
+        + "VALUES(?, ?, ?, str_to_date(?, '%Y-%m-%dT%H%i%s'), ?)";
     
     connection.query(queryString, [user_ID, dish_ID, weight, date, photo_ID], (err, res) => {
 
@@ -213,7 +203,7 @@ function addEating(connection, user_id, date, eating, cb) {
         // Processing the photo
         if (eating.photo) {
 
-            let photo_id = user_id + '_' + getDay(Date(date));
+            let photo_id = user_id + '_' + date;
 
             images.saveImage('dishes', photo_id, eating.photo, (err) => {
 
@@ -225,8 +215,18 @@ function addEating(connection, user_id, date, eating, cb) {
         }
         else {
             // Photo_id is equal to dish_id
-            insertIntoDishesEats(connection, user_id, dish_id,
-                eating.weight, date, '' + dish_id, cb);
+            /*insertIntoDishesEats(connection, user_id, dish_id,
+                eating.weight, date, '' + dish_id, cb);*/
+
+            let photo_id = user_id + '_' + date;
+
+            images.createStandardImage('dishes', photo_id, (err) => {
+
+                if (err) cb(err);
+
+                insertIntoDishesEats(connection, user_id, dish_id,
+                    eating.weight, date, photo_id, cb);
+            });
         }
     });    
 }
@@ -242,7 +242,7 @@ function editEating(connection, user_id, eating_id, date, eating, cb) {
         // Updating the photo
         if (eating.photo) {
 
-            let photo_id = user_id + '_' + getDay(Date(date));
+            let photo_id = user_id + '_' + date;
 
             images.saveImage('dishes', photo_id, eating.photo, (err) => {
 

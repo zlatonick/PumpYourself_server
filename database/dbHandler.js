@@ -20,11 +20,17 @@ exports.connectToDB = connectToDB;
 
 
 // Creating the connection to the database
-var connection = mysql.createConnection({
+/*var connection = mysql.createConnection({
     host     : process.env.DB_HOST,
     user     : process.env.DB_USER,
     password : process.env.DB_PASS,
     database : process.env.DB_NAME
+});*/
+var connection = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : 'root',
+    database : 'health'
 });
 
 
@@ -45,11 +51,19 @@ var actions = {
         3: foodHandler.deleteEating
     },
     trainings: {
-        0: trainingsHandler.getAllPublicTrainings,
-        1: trainingsHandler.getAllUserTrainings,
+        0: trainingsHandler.getAllUserTrainings,
+        1: trainingsHandler.getAllPublicTrainings,
         2: trainingsHandler.createTraining,
         3: trainingsHandler.startTraining,
         4: trainingsHandler.stopTraining
+    },
+    groups: {
+        0: groupsHandler.getAllUserGroups,
+        1: groupsHandler.getMoreGroupInfo,
+        2: groupsHandler.addGroup,
+        3: groupsHandler.editGroup,
+        4: groupsHandler.inviteFriendIntoGroup,
+        5: groupsHandler.leaveTheGroup
     },
     profile: {
         0: profileHandler.getProfileInfo,
@@ -62,7 +76,7 @@ var actions = {
         7: profileHandler.acceptFriendRequest,
         8: profileHandler.declineFriendRequest,
         9: profileHandler.sendFriendRequest,
-        10: profileHandler.removeFriend,
+        10: profileHandler.removeFriend
     }
 }
 
@@ -76,39 +90,4 @@ function carry(fn, first) {
 // Getting the group and id of action and returning the appropriate function
 function getActionByID(group, id) {
     return carry(actions[group][id], connection);
-}
-
-
-// TODO: Move to another (registration) module
-// Adding the new user
-// Callback parameters: error, id_of_new_user
-function addUser(userName, cb) {
-
-    // Checking if the user name already exists
-    let queryString = "SELECT COUNT(*) AS quan FROM Users WHERE User_name = ?";
-
-    connection.query(queryString, [userName], (err, res) => {
-
-        if (err) {
-            cb(err);
-        }
-
-        if (res[0].quan > 0) {
-            cb("User name already exists");
-        }
-        else {
-            
-            // Inserting the new user
-            let insertUserQuery = 'INSERT INTO Users SET ?';
-
-            connection.query(insertUserQuery, {user_name: userName}, (err, resIn) => {
-                
-                if (err) {
-                    cb(err);
-                }
-
-                cb(null, resIn.insertId);
-            });
-        }
-    });
 }
