@@ -5,7 +5,8 @@
   "main": "healthServerHTTP.js",
   "scripts": {
     "start": "node -r dotenv/config healthServerHTTP.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "initdb": "node -r dotenv/config initDB.js"
   },
   "author": "Zlatonick",
   "license": "ISC",

@@ -249,8 +249,8 @@ function editEating(connection, user_id, eating_id, date, eating, cb) {
                 if (err) cb(err);
                 
                 // Updating the raw in database
-                let queryString = "UPDATE dishes_eats SET dish_id = ?, weight = ?, photo_ID = ? "
-                    + "WHERE user_dish_id = ?";
+                let queryString = "UPDATE Dishes_eats SET Dish_id = ?, Weight = ?, Photo_ID = ? "
+                    + "WHERE User_dish_id = ?";
     
                 connection.query(queryString, [dish_id, eating.weight, photo_id, eating_id],
                     (err) => {
@@ -260,8 +260,8 @@ function editEating(connection, user_id, eating_id, date, eating, cb) {
         }
         else {
             // Updating the raw in database
-            let queryString = "UPDATE dishes_eats SET dish_id = ?, weight = ? "
-                + "WHERE user_dish_id = ?";
+                let queryString = "UPDATE Dishes_eats SET Dish_id = ?, Weight = ? "
+                + "WHERE User_dish_id = ?";
 
             connection.query(queryString, [dish_id, eating.weight, eating_id], (err) => {
                 cb(err);
@@ -274,7 +274,7 @@ function editEating(connection, user_id, eating_id, date, eating, cb) {
 // Delete the eating
 function deleteEating(connection, eating_id, cb) {
 
-    let queryString = "DELETE FROM dishes_eats WHERE user_dish_id = ?";
+    let queryString = "DELETE FROM Dishes_eats WHERE User_dish_id = ?";
 
     connection.query(queryString, [eating_id], (err) => {
 

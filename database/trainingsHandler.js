@@ -16,12 +16,12 @@ exports.stopTraining = stopTraining;
 // Get all trainings of the user
 function getAllUserTrainings(connection, user_id, cb) {
 
-    let queryString = "SELECT start_date, "
-        + "trainings.training_id AS training_id, training_name, "
-        + "training_description, day_number, day_plan FROM trainings_days "
-        + "JOIN trainings ON trainings.training_id = trainings_days.training_id "
-        + "JOIN trainings_users ON trainings.training_id = trainings_users.training_id "
-        + "WHERE user_id = ?";
+    let queryString = "SELECT Start_date, "
+        + "Trainings.Training_id AS Training_id, Training_name, "
+        + "Training_description, Day_number, Day_plan FROM Trainings_days "
+        + "JOIN Trainings ON Trainings.Training_id = Trainings_days.Training_id "
+        + "JOIN Trainings_users ON Trainings.Training_id = Trainings_users.Training_id "
+        + "WHERE User_id = ?";
 
     connection.query(queryString, [user_id], (err, res) => {
 
@@ -31,22 +31,22 @@ function getAllUserTrainings(connection, user_id, cb) {
 
         for (line of res) {
 
-            let currTrainingId = line['training_id'];
+            let currTrainingId = line['Training_id'];
 
             if (result[currTrainingId]) {
                 result[currTrainingId].days.push({
-                    day_number: line['day_number'],
-                    day_plan: line['day_plan']
+                    day_number: line['Day_number'],
+                    day_plan: line['Day_plan']
                 });
             }
             else {
                 result[currTrainingId] = {
-                    name: line['training_name'],
-                    description: line['training_description'],
-                    start_date: dates.getDay(line['start_date']),
+                    name: line['Training_name'],
+                    description: line['Training_description'],
+                    start_date: dates.getDay(line['Start_date']),
                     days: [{
-                        day_number: line['day_number'],
-                        day_plan: line['day_plan']
+                        day_number: line['Day_number'],
+                        day_plan: line['Day_plan']
                     }]
                 };
             }
@@ -59,10 +59,10 @@ function getAllUserTrainings(connection, user_id, cb) {
 // Get trainings, that are available to all users
 function getAllPublicTrainings(connection, cb) {
 
-    let queryString = "SELECT trainings.training_id AS training_id, training_name, "
-        + "training_description, day_number, day_plan FROM trainings_days "
-        + "JOIN trainings ON trainings.training_id = trainings_days.training_id "
-        + "WHERE trainings.is_public = 1";
+    let queryString = "SELECT Trainings.Training_id AS Training_id, Training_name, "
+        + "Training_description, Day_number, Day_plan FROM Trainings_days "
+        + "JOIN Trainings ON Trainings.Training_id = Trainings_days.Training_id "
+        + "WHERE Trainings.Is_public = 1";
 
     connection.query(queryString, (err, res) => {
         
@@ -73,23 +73,23 @@ function getAllPublicTrainings(connection, cb) {
 
         for (line of res) {
 
-            let currTrainingId = line['training_id'];
+            let currTrainingId = line['Training_id'];
 
             // Adding the day to the training
             if (trainings[currTrainingId]) {
                 trainings[currTrainingId].days.push({
-                    day_number: line['day_number'],
-                    day_plan: line['day_plan']
+                    day_number: line['Day_number'],
+                    day_plan: line['Day_plan']
                 });
             }
             else {
                 // Creating the training and adding the day
                 trainings[currTrainingId] = {
-                    name: line['training_name'],
-                    description: line['training_description'],
+                    name: line['Training_name'],
+                    description: line['Training_description'],
                     days: [{
-                        day_number: line['day_number'],
-                        day_plan: line['day_plan']
+                        day_number: line['Day_number'],
+                        day_plan: line['Day_plan']
                     }]
                 };
             }
@@ -103,8 +103,8 @@ function getAllPublicTrainings(connection, cb) {
 // Add new training to the database
 function createTraining(connection, training, cb) {
 
-    let queryString = "INSERT INTO trainings(training_name, training_description, "
-        + "is_public) VALUES(?, ?, 0)";
+    let queryString = "INSERT INTO Trainings(Training_name, Training_description, "
+        + "Is_public) VALUES(?, ?, 0)";
 
     connection.query(queryString, [training.name, training.description], (err, res) => {
 
@@ -117,7 +117,7 @@ function createTraining(connection, training, cb) {
 
         for (day of training.days) {
 
-            let queryString = "INSERT INTO trainings_days(training_id, day_number, day_plan) "
+            let queryString = "INSERT INTO Trainings_days(Training_id, Day_number, Day_plan) "
                 + "VALUES(?, ?, ?)";
 
             asyncQueue.addTask({
@@ -139,7 +139,7 @@ function createTraining(connection, training, cb) {
 // Subscribe on the training
 function startTraining(connection, user_id, training_id, date, cb) {
 
-    let queryString = "INSERT INTO trainings_users(user_id, training_id, start_date) "
+    let queryString = "INSERT INTO Trainings_users(User_id, Training_id, Start_date) "
         + "VALUES(?, ?, ?)";
 
     connection.query(queryString, [user_id, training_id, date], (err) => {
@@ -151,7 +151,7 @@ function startTraining(connection, user_id, training_id, date, cb) {
 // Stop the training plan
 function stopTraining(connection, user_id, training_id, cb) {
 
-    let queryString = "DELETE FROM trainings_users WHERE user_id = ? AND training_id = ?";
+    let queryString = "DELETE FROM Trainings_users WHERE User_id = ? AND Training_id = ?";
 
     connection.query(queryString, [user_id, training_id], (err) => {
         cb(err);

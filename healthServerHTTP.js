@@ -18,6 +18,13 @@ const server = http.createServer((request, response) => {
     // Determining the type of query
     let group = incomingUrl.pathname.substring(1);
     let actionId = incomingUrl.searchParams.get('action_id');
+
+    if (group == null || actionId == null) {
+        console.log("Incorrect URL. Missing group and action id");
+        response.statusCode = 404;
+        response.end();
+        return;
+    }
     
     if (request.method == 'GET') {
 
@@ -33,8 +40,15 @@ const server = http.createServer((request, response) => {
         // Forming the task and executing it
         task = formTask(group, actionId, params, response);
         
-        asyncQueue.addTask(task);
-
+        if (task) {
+            asyncQueue.addTask(task);
+        }
+        else {
+            console.log("Incorrect URL");
+            response.statusCode = 404;
+            response.end();
+            return;
+        }
     }
     else if (request.method == 'POST') {
 
@@ -50,14 +64,25 @@ const server = http.createServer((request, response) => {
                 let reqBody = safeJsonParse(body);
 
                 if (reqBody) {
+
                     // Forming the task
                     let task = formTask(group, actionId, reqBody, response);
-
-                    // Putting the task into queue and executing it
-                    asyncQueue.addTask(task);
+        
+                    if (task) {
+                        asyncQueue.addTask(task);
+                    }
+                    else {
+                        response.statusCode = 404;
+                        response.end();
+                        console.log("Incorrect URL");
+                        return;
+                    }
                 }
                 else {
                     console.log("Error while parsing JSON");
+                    response.statusCode = 404;
+                    response.end();
+                    return;
                 }
             }
         });        
@@ -99,8 +124,15 @@ function safeJsonParse(line) {
 
 // Forming the correct task for asynchronous queue
 function formTask(group, actionId, reqBody, response) {
+
+    let receivedAction = dbHandler.getActionByID(group, actionId);
+
+    if (receivedAction == null) {
+        return null;
+    }
+
     return {
-        action: dbHandler.getActionByID(group, actionId),
+        action: receivedAction,
         args: reqBody,
         callback: formServerResponse(response)
     }
@@ -142,7 +174,7 @@ dbHandler.connectToDB((err, connectionID) => {
     }
     else {
         console.log("Connected to database with id " + connectionID);
-        server.listen(8080);
+        server.listen(process.env.PORT);
         console.log("Server is listening the port 8080");
     }
 });

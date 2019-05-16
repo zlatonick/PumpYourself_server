@@ -16,10 +16,10 @@ exports.leaveTheGroup = leaveTheGroup;
 
 function getAllUserGroups(connection, user_id, cb) {
 
-    let queryString = "SELECT groups_users.group_id AS group_id, "
-        + "group_name, group_description FROM groups_users "
-        + "JOIN training_groups ON groups_users.group_id = training_groups.group_id "
-        + "WHERE user_id = ?";
+    let queryString = "SELECT Groups_users.Group_id AS Group_id, "
+        + "Group_name, Group_description FROM Groups_users "
+        + "JOIN Training_groups ON Groups_users.Group_id = Training_groups.Group_id "
+        + "WHERE User_id = ?";
 
     connection.query(queryString, [user_id], (err, res) => {
 
@@ -32,11 +32,11 @@ function getAllUserGroups(connection, user_id, cb) {
 
         for (line of res) {
 
-            let group_id = line['group_id'];
+            let group_id = line['Group_id'];
 
             result[group_id] = {
-                name: line['group_name'],
-                description: line['group_description']
+                name: line['Group_name'],
+                description: line['Group_description']
             }
 
             // Loading the photo
@@ -59,15 +59,15 @@ function getAllUserGroups(connection, user_id, cb) {
 
 function getMoreGroupInfo(connection, group_id, cb) {
 
-    let queryString = "SELECT group_name, group_description, start_date, "
-        + "trainings.training_id AS training_id, training_name, "
-        + "training_description, day_number, day_plan, "
-        + "groups_users.user_id AS user_id, user_name FROM training_groups "
-        + "JOIN trainings ON trainings.training_id = training_groups.training_id "
-        + "JOIN trainings_days ON trainings_days.training_id = training_groups.training_id "
-        + "JOIN groups_users ON training_groups.group_id = groups_users.group_id "
-        + "JOIN users ON groups_users.user_id = users.user_id "
-        + "WHERE groups_users.group_id = ?";
+    let queryString = "SELECT Group_name, Group_description, Start_date, "
+        + "Trainings.Training_id AS Training_id, Training_name, "
+        + "Training_description, Day_number, Day_plan, "
+        + "Groups_users.User_id AS User_id, User_name FROM Training_groups "
+        + "JOIN Trainings ON Trainings.Training_id = Training_groups.Training_id "
+        + "JOIN Trainings_days ON Trainings_days.Training_id = Training_groups.Training_id "
+        + "JOIN Groups_users ON Training_groups.Group_id = Groups_users.Group_id "
+        + "JOIN Users ON Groups_users.User_id = Users.User_id "
+        + "WHERE Groups_users.Group_id = ?";
 
     connection.query(queryString, [group_id], (err, res) => {
 
@@ -79,8 +79,8 @@ function getMoreGroupInfo(connection, group_id, cb) {
         let result = {
             members: {},
             training: {
-                training_id: res[0]['training_id'],
-                start_date: res[0]['start_date'],
+                training_id: res[0]['Training_id'],
+                start_date: res[0]['Start_date'],
                 days: []
             }
         }
@@ -89,23 +89,23 @@ function getMoreGroupInfo(connection, group_id, cb) {
 
             // Adding new day, if not already
             if (result.training.days.every(val =>
-                val.day_number != line['day_number'])) {
+                val.day_number != line['Day_number'])) {
                     result.training.days.push({
-                        day_number: line['day_number'],
-                        day_plan: line['day_plan']
+                        day_number: line['Day_number'],
+                        day_plan: line['Day_plan']
                     });
             }
 
             // Adding new member, if not already
-            if (!result.members[line['user_id']]) {
-                    result.members[line['user_id']] = {
-                        user_name: line['user_name']
+            if (!result.members[line['User_id']]) {
+                    result.members[line['User_id']] = {
+                        user_name: line['User_name']
                     };
 
                     // Loading the photo
                     queue.addTask({
                         action: images.getImage,
-                        args: ['users', line['user_id']],
+                        args: ['users', line['User_id']],
                         callback: (err, res, image_id) => {
                             if (err) cb(err);
                             result.members[image_id].photo = res;
@@ -125,7 +125,7 @@ function getMoreGroupInfo(connection, group_id, cb) {
 function addGroup(connection, user_id, group, cb) {
 
     // Adding the group
-    let queryString = "INSERT INTO training_groups(Group_name, Group_description, "
+    let queryString = "INSERT INTO Training_groups(Group_name, Group_description, "
         + "Training_id, Start_date) VALUES(?, ?, ?, ?)";
 
     connection.query(queryString, [group.name, group.description, group.training_id,

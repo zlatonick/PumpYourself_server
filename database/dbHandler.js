@@ -20,17 +20,11 @@ exports.connectToDB = connectToDB;
 
 
 // Creating the connection to the database
-/*var connection = mysql.createConnection({
+var connection = mysql.createConnection({
     host     : process.env.DB_HOST,
     user     : process.env.DB_USER,
     password : process.env.DB_PASS,
     database : process.env.DB_NAME
-});*/
-var connection = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : 'root',
-    database : 'health'
 });
 
 
@@ -89,5 +83,10 @@ function carry(fn, first) {
 
 // Getting the group and id of action and returning the appropriate function
 function getActionByID(group, id) {
-    return carry(actions[group][id], connection);
+    if (actions[group] != null && actions[group][id] != null) {
+        return carry(actions[group][id], connection);
+    }
+    else {
+        return null;
+    }
 }
