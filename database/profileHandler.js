@@ -19,6 +19,7 @@ exports.acceptFriendRequest = acceptFriendRequest;
 exports.declineFriendRequest = declineFriendRequest;
 exports.sendFriendRequest = sendFriendRequest;
 exports.removeFriend = removeFriend;
+exports.login = login
 
 
 // Getting all needed info about the user
@@ -442,4 +443,22 @@ function removeFriend(connection, user_id, friend_id, cb) {
             cb(err);
         });
     });
+}
+
+
+function login(connection, login, password, cb) {
+
+    let queryString = "SELECT User_ID FROM Users WHERE Login = ? AND Password = ?";
+
+    connection.query(queryString, [login, password], (err, res) => {
+
+        if (err) cb(err);
+
+        if (res.length == 0) {
+            cb(null, -1);
+        }
+        else {
+            cb(null, res[0]['User_ID']);
+        }
+    })
 }

@@ -20,9 +20,8 @@ const server = http.createServer((request, response) => {
     let actionId = incomingUrl.searchParams.get('action_id');
 
     if (group == null || actionId == null) {
-        console.log("Incorrect URL. Missing group and action id");
-        response.statusCode = 404;
-        response.end();
+        finishResponse(response, 404, "Incorrect URL. Missing group and action id",
+            incomingUrl.path);
         return;
     }
     
@@ -44,9 +43,7 @@ const server = http.createServer((request, response) => {
             asyncQueue.addTask(task);
         }
         else {
-            console.log("Incorrect URL");
-            response.statusCode = 404;
-            response.end();
+            finishResponse(response, 404, "Incorrect URL", incomingUrl.path);
             return;
         }
     }
@@ -56,7 +53,7 @@ const server = http.createServer((request, response) => {
         getRequestBody(request, (err, body) => {
 
             if (err) {
-                console.log("Bad request");
+                finishResponse(response, 404, "Bad request", incomingUrl.path);
             }
             else {
 
@@ -72,16 +69,12 @@ const server = http.createServer((request, response) => {
                         asyncQueue.addTask(task);
                     }
                     else {
-                        response.statusCode = 404;
-                        response.end();
-                        console.log("Incorrect URL");
+                        finishResponse(response, 404, "Incorrect URL", incomingUrl.path);
                         return;
                     }
                 }
                 else {
-                    console.log("Error while parsing JSON");
-                    response.statusCode = 404;
-                    response.end();
+                    finishResponse(response, 404, "Error while parsing JSON", incomingUrl.path);
                     return;
                 }
             }
@@ -144,12 +137,9 @@ function formServerResponse(response) {
     return (err, res) => {
 
         if (err) {
-            response.statusCode = 404;
-            console.log(err);
+            finishResponse(response, 404, err.toString());
         }
         else {
-            
-            response.statusCode = 200;
 
             // Headers
             response.setHeader('Content-Type', 'application/json');
@@ -159,11 +149,26 @@ function formServerResponse(response) {
                 response.write(JSON.stringify(res));
             }
 
-            console.log("Request has been processed successfully");
+            finishResponse(response, 200, "Request has been processed successfully")
         }
 
         response.end();
     }
+}
+
+
+function finishResponse(response, code, message, url) {
+
+    if (url) {
+        console.log(message + ". " + new Date().toLocaleString() + " - " + url);
+
+    }
+    else {
+        console.log(message + ". " + new Date().toLocaleString());
+    }
+
+    response.statusCode = code;
+    response.end();
 }
 
 

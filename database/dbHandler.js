@@ -70,7 +70,8 @@ var actions = {
         7: profileHandler.acceptFriendRequest,
         8: profileHandler.declineFriendRequest,
         9: profileHandler.sendFriendRequest,
-        10: profileHandler.removeFriend
+        10: profileHandler.removeFriend,
+        11: profileHandler.login
     }
 }
 
