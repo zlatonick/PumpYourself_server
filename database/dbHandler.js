@@ -39,39 +39,39 @@ function connectToDB(cb) {
 // All types of database queries
 var actions = {
     meal: {
-        0: foodHandler.getAllFood,
-        1: foodHandler.addEating,
-        2: foodHandler.editEating,
-        3: foodHandler.deleteEating
+        getallfood: foodHandler.getAllFood,
+        addeating: foodHandler.addEating,
+        editeating: foodHandler.editEating,
+        deleteeating: foodHandler.deleteEating
     },
     trainings: {
-        0: trainingsHandler.getAllUserTrainings,
-        1: trainingsHandler.getAllPublicTrainings,
-        2: trainingsHandler.createTraining,
-        3: trainingsHandler.startTraining,
-        4: trainingsHandler.stopTraining
+        getallusertrainings: trainingsHandler.getAllUserTrainings,
+        getallpublictrainings: trainingsHandler.getAllPublicTrainings,
+        createtraining: trainingsHandler.createTraining,
+        starttraining: trainingsHandler.startTraining,
+        stoptraining: trainingsHandler.stopTraining
     },
     groups: {
-        0: groupsHandler.getAllUserGroups,
-        1: groupsHandler.getMoreGroupInfo,
-        2: groupsHandler.addGroup,
-        3: groupsHandler.editGroup,
-        4: groupsHandler.inviteFriendIntoGroup,
-        5: groupsHandler.leaveTheGroup
+        getallusergroups: groupsHandler.getAllUserGroups,
+        getmoregroupinfo: groupsHandler.getMoreGroupInfo,
+        addgroup: groupsHandler.addGroup,
+        editgroup: groupsHandler.editGroup,
+        invitefriendintogroup: groupsHandler.inviteFriendIntoGroup,
+        leavethegroup: groupsHandler.leaveTheGroup
     },
     profile: {
-        0: profileHandler.getProfileInfo,
-        1: profileHandler.getFriendInfo,
-        2: profileHandler.searchUser,
-        3: profileHandler.addNewUser,
-        4: profileHandler.changeProfileInfo,
-        5: profileHandler.acceptGroupRequest,
-        6: profileHandler.declineGroupRequest,
-        7: profileHandler.acceptFriendRequest,
-        8: profileHandler.declineFriendRequest,
-        9: profileHandler.sendFriendRequest,
-        10: profileHandler.removeFriend,
-        11: profileHandler.login
+        getprofileinfo: profileHandler.getProfileInfo,
+        getfriendinfo: profileHandler.getFriendInfo,
+        searchuser: profileHandler.searchUser,
+        addnewuser: profileHandler.addNewUser,
+        changeprofileinfo: profileHandler.changeProfileInfo,
+        acceptgrouprequest: profileHandler.acceptGroupRequest,
+        declinegrouprequest: profileHandler.declineGroupRequest,
+        acceptfriendrequest: profileHandler.acceptFriendRequest,
+        declinefriendrequest: profileHandler.declineFriendRequest,
+        sendfriendrequest: profileHandler.sendFriendRequest,
+        removefriend: profileHandler.removeFriend,
+        login: profileHandler.login
     }
 }
 
@@ -83,9 +83,9 @@ function carry(fn, first) {
 
 
 // Getting the group and id of action and returning the appropriate function
-function getActionByID(group, id) {
-    if (actions[group] != null && actions[group][id] != null) {
-        return carry(actions[group][id], connection);
+function getActionByID(group, action) {
+    if (actions[group] != null && actions[group][action] != null) {
+        return carry(actions[group][action], connection);
     }
     else {
         return null;

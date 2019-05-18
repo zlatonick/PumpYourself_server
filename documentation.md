@@ -13,7 +13,7 @@
 
 ### Получение всей еды пользователя за период
 
-Запрос: `GET /meal?action_id=0...`
+Запрос: `GET /meal/getAllFood`
 
 Параметры запроса:
 
@@ -24,56 +24,41 @@
 Тело ответа сервера:
 
 ```
-{
-    days: {
-        <Date> : [{                 // ключ - дата приема пищи (YYYY-MM-DD)
-            id: <Number>,           // Идентификатор факта приема пищи
-            id_food: <Number>,      // является ключом в объекте dishes
-            id_photo: <String>,     // является ключом в объекте photos
-            date_time: <Date>,      // дата и время приема пищи (YYYY-MM-DDTHHMMSS)
-            weight: <Number>,
-        }, ...],
-        ...
+[
+    {
+        User_dish_ID: <Number>,         // Идентификатор факта приема пищи
+        Dish_ID: <Number>,              // Идентификатор блюда
+        Weight: <Number>,               // Вес
+        Eating_date: <Date>,            // Дата приема пищи (YYYY-MM-DDTHH:MM:SS.SSSZ)
+        Photo_ID: <String>,             // Идентификатор фотографии блюда
+        Dish_name: <String>,            // Имя блюда
+        Proteins: <Number>,             // Количество белков
+        Fats: <Number>,                 // Количество жиров
+        Carbohydrates: <Number>,        // Количество углеводов
+        Calories: <Number>              // Количество калорий
     },
-
-    dishes: {
-        <Number> : {            // ключ - id блюда
-            name: <String>,
-            proteins: <Number>,
-            fats: <Number>,
-            carbohydrates: <Number>,
-            calories: <Number>
-        },
-        ...
-    },
-
-    photos: {
-        <String> : <Buffer in JSON>,     // ключ - id фотографии, значение - фотография
-        ...
-    }
-}
+    ...
+]
 ```
 
 ### Добавление факта приема пищи пользователем
 
-Запрос: `POST /meal?action_id=1`
+Запрос: `POST /meal/addeating`
 
 Тело запроса:
 
 ```
-[
-    <Number>,                       // Идентификатор пользователя
-    <Date>,                         // Дата отправки запроса (YYYY-MM-DDTHHMMSS)
-    {
-        name: <String>,             // Название блюда
-        weight: <Number>,           // Вес блюда
-        photo: <Buffer in JSON>,    // Фотография блюда*
-        proteins: <Number>,         // Количество грамм белков на 100 грамм блюда
-        fats: <Number>,             // Количество грамм жиров на 100 грамм блюда
-        carbohydrates: <Number>,    // Количество грамм углеводов на 100 грамм блюда
-        calories: <Number>          // Количество калорий на 100 грамм блюда
-    }
-]
+{
+    user_id: <Number>,          // Идентификатор пользователя
+    date: <Date>,               // Дата отправки запроса (YYYY-MM-DDTHHMMSS)
+    name: <String>,             // Название блюда
+    weight: <Number>,           // Вес блюда
+    photo: <Buffer in JSON>,    // Фотография блюда*
+    proteins: <Number>,         // Количество грамм белков на 100 грамм блюда
+    fats: <Number>,             // Количество грамм жиров на 100 грамм блюда
+    carbohydrates: <Number>,    // Количество грамм углеводов на 100 грамм блюда
+    calories: <Number>          // Количество калорий на 100 грамм блюда
+}
 ```
 
 \* - Если было выбрано стандартное блюдо и оно не было изменено, фотография не присылается

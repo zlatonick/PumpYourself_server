@@ -13,14 +13,17 @@ const dbHandler = require('./database/dbHandler.js');
 const server = http.createServer((request, response) => {
 
     // Parsing the URL of received query
-    let incomingUrl = new URL(request.url, 'https://example.org/');
+    const incomingUrl = new URL(request.url, 'https://example.org/');
 
     // Determining the type of query
-    let group = incomingUrl.pathname.substring(1);
-    let actionId = incomingUrl.searchParams.get('action_id');
+    let urlParts = incomingUrl.pathname.split('/');
+    urlParts.shift();       // Removing first empty string
 
-    if (group == null || actionId == null) {
-        finishResponse(response, 404, "Incorrect URL. Missing group and action id",
+    let group = urlParts[0];
+    let action = urlParts[1];
+
+    if (group == null || action == null) {
+        finishResponse(response, 404, "Incorrect URL. Missing group or action",
             incomingUrl.path);
         return;
     }
@@ -28,16 +31,14 @@ const server = http.createServer((request, response) => {
     if (request.method == 'GET') {
 
         // Putting all other URL parameters into the array
-        let params = [];
+        let params = {};
 
-        incomingUrl.searchParams.forEach((value) => {
-            params.push(value);
+        incomingUrl.searchParams.forEach((value, name) => {
+            params[name] = value;
         });
 
-        params.shift();        // Removing the 'action_id' parameter
-
         // Forming the task and executing it
-        task = formTask(group, actionId, params, response);
+        task = formTask(group, action, params, response);
         
         if (task) {
             asyncQueue.addTask(task);
@@ -63,7 +64,7 @@ const server = http.createServer((request, response) => {
                 if (reqBody) {
 
                     // Forming the task
-                    let task = formTask(group, actionId, reqBody, response);
+                    let task = formTask(group, action, reqBody, response);
         
                     if (task) {
                         asyncQueue.addTask(task);
@@ -126,7 +127,7 @@ function formTask(group, actionId, reqBody, response) {
 
     return {
         action: receivedAction,
-        args: reqBody,
+        args: [reqBody],
         callback: formServerResponse(response)
     }
 }

@@ -27,7 +27,7 @@ function checkDishesEquality(dish1, dish2) {
 
 // Get all eatings data of the user for the period (including borders)
 // date: YYYY-MM-DDTHHMMSS
-function getAllFood(connection, user_ID, start_date, end_date, cb) {
+function getAllFood(connection, params, cb) {
 
     // Selecting all the eatings of the user
     let queryString = "SELECT User_dish_ID, Dishes_eats.Dish_ID AS Dish_ID, Weight, Eating_date, "
@@ -36,71 +36,74 @@ function getAllFood(connection, user_ID, start_date, end_date, cb) {
         + "JOIN Dishes ON Dishes_eats.Dish_ID = Dishes.Dish_ID "
         + "WHERE User_ID = ? AND Eating_date BETWEEN DATE(?) AND DATE(?)";
 
-    connection.query(queryString, [user_ID, start_date, end_date], (err, res) => {
+    connection.query(queryString, [params.user_id, params.start_date,
+        params.end_date], (err, res) => {
 
         if (err) cb(err);
 
-        // All days of eating the food
-        let foodByDays = {};
+        cb(null, res);
 
-        // Information about all eaten dishes
-        let allDishes = {};
+        // // All days of eating the food
+        // let foodByDays = {};
 
-        // All photos
-        let allPhotos = {};
+        // // Information about all eaten dishes
+        // let allDishes = {};
 
-        for (line of res) {
+        // // All photos
+        // let allPhotos = {};
+
+        // for (line of res) {
             
-            // Day of eating
-            let currDate = dates.getDay(line['Eating_date']);
+        //     // Day of eating
+        //     let currDate = dates.getDay(line['Eating_date']);
 
-            // Fact of eating
-            let currEating = {id: line['User_dish_ID'],
-                              id_food: line['Dish_ID'],
-                              id_photo: line['Photo_ID'],
-                              date_time: dates.getDateTime(line['Eating_date']),
-                              weight: line['Weight']};
+        //     // Fact of eating
+        //     let currEating = {id: line['User_dish_ID'],
+        //                       id_food: line['Dish_ID'],
+        //                       id_photo: line['Photo_ID'],
+        //                       date_time: dates.getDateTime(line['Eating_date']),
+        //                       weight: line['Weight']};
 
-            // Adding the eating to the array of certain day
-            if (foodByDays[currDate] == null) {
-                foodByDays[currDate] = [currEating];
-            }
-            else {
-                foodByDays[currDate].push(currEating);
-            }
+        //     // Adding the eating to the array of certain day
+        //     if (foodByDays[currDate] == null) {
+        //         foodByDays[currDate] = [currEating];
+        //     }
+        //     else {
+        //         foodByDays[currDate].push(currEating);
+        //     }
 
-            // Adding the photo id
-            allPhotos[line['Photo_ID']] = -1;
+        //     // Adding the photo id
+        //     allPhotos[line['Photo_ID']] = -1;
 
-            // Adding the information about the dish
-            if (allDishes[line['Dish_ID']] == null) {
-                allDishes[line['Dish_ID']] = {name: line['Dish_name'],
-                                              proteins: line['Proteins'],
-                                              fats: line['Fats'],
-                                              carbohydrates: line['Carbohydrates'],
-                                              calories: line['Calories']};
-            }
-        }
+        //     // Adding the information about the dish
+        //     if (allDishes[line['Dish_ID']] == null) {
+        //         allDishes[line['Dish_ID']] = {name: line['Dish_name'],
+        //                                       proteins: line['Proteins'],
+        //                                       fats: line['Fats'],
+        //                                       carbohydrates: line['Carbohydrates'],
+        //                                       calories: line['Calories']};
+        //     }
+        // }
 
-        // Adding the photos of dishes
-        let asyncQueue = asyncQueueFactory.createQueue();
+        // // Adding the photos of dishes
+        // let asyncQueue = asyncQueueFactory.createQueue();
 
-        for (photoId in allPhotos) {
-            asyncQueue.addTask({
-                action: images.getImage,
-                args: ['dishes', photoId],
-                callback: (err, res, image_id) => {
-                    if (err) cb(err);
-                    allPhotos[image_id] = res;
-                }
-            });
-        }
+        // for (photoId in allPhotos) {
+        //     asyncQueue.addTask({
+        //         action: images.getImage,
+        //         args: ['dishes', photoId],
+        //         callback: (err, res, image_id) => {
+        //             if (err) cb(err);
+        //             allPhotos[image_id] = res;
+        //         }
+        //     });
+        // }
 
-        // Adding the callback
-        asyncQueue.addTask({
-            action: cb,
-            args: [null, {days: foodByDays, dishes: allDishes, photos: allPhotos}]
-        });
+        // // Adding the callback
+        // asyncQueue.addTask({
+        //     action: cb,
+        //     args: [null, {days: foodByDays, dishes: allDishes, photos: allPhotos}]
+        // });
     });
 }
 
@@ -194,23 +197,23 @@ function findOrAddDish(connection, dish, cb) {
 // Add the eating of the user
 // If the standard eating used, eating.photo can be null
 // Callback parameters: id of the new row in Dishes_eats table
-function addEating(connection, user_id, date, eating, cb) {
+function addEating(connection, params, cb) {
 
-    findOrAddDish(connection, eating, (err, dish_id) => {
+    findOrAddDish(connection, params, (err, dish_id) => {
 
         if (err) cb(err);
 
         // Processing the photo
-        if (eating.photo) {
+        if (params.photo) {
 
-            let photo_id = user_id + '_' + date;
+            let photo_id = params.user_id + '_' + params.date;
 
-            images.saveImage('dishes', photo_id, eating.photo, (err) => {
+            images.saveImage('dishes', photo_id, params.photo, (err) => {
 
                 if (err) cb(err);
 
-                insertIntoDishesEats(connection, user_id, dish_id,
-                    eating.weight, date, photo_id, cb);
+                insertIntoDishesEats(connection, params.user_id, dish_id,
+                    params.weight, params.date, photo_id, cb);
             });
         }
         else {
@@ -218,14 +221,14 @@ function addEating(connection, user_id, date, eating, cb) {
             /*insertIntoDishesEats(connection, user_id, dish_id,
                 eating.weight, date, '' + dish_id, cb);*/
 
-            let photo_id = user_id + '_' + date;
+            let photo_id = params.user_id + '_' + params.date;
 
             images.createStandardImage('dishes', photo_id, (err) => {
 
                 if (err) cb(err);
 
-                insertIntoDishesEats(connection, user_id, dish_id,
-                    eating.weight, date, photo_id, cb);
+                insertIntoDishesEats(connection, params.user_id, dish_id,
+                    params.weight, params.date, photo_id, cb);
             });
         }
     });    
