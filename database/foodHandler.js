@@ -236,26 +236,26 @@ function addEating(connection, params, cb) {
 
 
 // Edit the eating (weight of dish)
-function editEating(connection, user_id, eating_id, date, eating, cb) {
+function editEating(connection, params, cb) {
 
-    findOrAddDish(connection, eating, (err, dish_id) => {
+    findOrAddDish(connection, params, (err, dish_id) => {
 
         if (err) cb(err);     
 
         // Updating the photo
-        if (eating.photo) {
+        if (params.photo) {
 
-            let photo_id = user_id + '_' + date;
+            let photo_id = params.user_id + '_' + params.date;
 
-            images.saveImage('dishes', photo_id, eating.photo, (err) => {
+            images.saveImage('dishes', photo_id, params.photo, (err) => {
 
                 if (err) cb(err);
                 
                 // Updating the raw in database
-                let queryString = "UPDATE Dishes_eats SET Dish_id = ?, Weight = ?, Photo_ID = ? "
-                    + "WHERE User_dish_id = ?";
+                let queryString = "UPDATE Dishes_eats SET Dish_ID = ?, Weight = ?, Photo_ID = ? "
+                    + "WHERE User_dish_ID = ?";
     
-                connection.query(queryString, [dish_id, eating.weight, photo_id, eating_id],
+                connection.query(queryString, [dish_id, params.weight, photo_id, params.user_dish_id],
                     (err) => {
                     cb(err);
                 });
@@ -263,10 +263,11 @@ function editEating(connection, user_id, eating_id, date, eating, cb) {
         }
         else {
             // Updating the raw in database
-                let queryString = "UPDATE Dishes_eats SET Dish_id = ?, Weight = ? "
-                + "WHERE User_dish_id = ?";
+                let queryString = "UPDATE Dishes_eats SET Dish_ID = ?, Weight = ? "
+                + "WHERE User_dish_ID = ?";
 
-            connection.query(queryString, [dish_id, eating.weight, eating_id], (err) => {
+            connection.query(queryString, [dish_id, params.weight, photo_id, params.user_dish_id],
+                (err) => {
                 cb(err);
             });
         }          
@@ -275,11 +276,11 @@ function editEating(connection, user_id, eating_id, date, eating, cb) {
 
 
 // Delete the eating
-function deleteEating(connection, eating_id, cb) {
+function deleteEating(connection, params, cb) {
 
-    let queryString = "DELETE FROM Dishes_eats WHERE User_dish_id = ?";
+    let queryString = "DELETE FROM Dishes_eats WHERE User_dish_ID = ?";
 
-    connection.query(queryString, [eating_id], (err) => {
+    connection.query(queryString, [params.user_dish_id], (err) => {
 
         if (err) cb(err);
 

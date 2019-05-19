@@ -9,6 +9,7 @@ const fs = require('fs');
 exports.getImage = getImage;
 exports.saveImage = saveImage;
 exports.createStandardImage = createStandardImage;
+exports.getImageQuery = getImageQuery;
 
 
 function getPath(category, id) {
@@ -38,5 +39,13 @@ function saveImage(category, id, image, cb) {
 function createStandardImage(category, id, cb) {
     fs.copyFile(getPath(category, 'standard'), getPath(category, id), (err) => {
         cb(err);
+    });
+}
+
+
+function getImageQuery(group, params, cb) {
+    fs.readFile('./database/images/' + group + '/' + params.image_id + '.png', (err, data) => {
+        if (err) cb(err);
+        cb(null, data, 'image/png');
     });
 }

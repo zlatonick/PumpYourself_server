@@ -135,20 +135,27 @@ function formTask(group, actionId, reqBody, response) {
 
 // Forming the server response
 function formServerResponse(response) {
-    return (err, res) => {
+    return (err, res, type) => {
 
         if (err) {
             finishResponse(response, 404, err.toString());
         }
         else {
 
-            // Headers
-            response.setHeader('Content-Type', 'application/json');
-
-            // Result JSON
-            if (res) {
-                response.write(JSON.stringify(res));
+            // Image
+            if (type && typeof(type) == 'string') {
+                response.setHeader('Content-Type', type);
+                response.write(res, 'binary');
             }
+            else {
+                
+                response.setHeader('Content-Type', 'application/json');
+                
+                // Result JSON
+                if (res) {
+                    response.write(JSON.stringify(res));
+                }
+            }            
 
             finishResponse(response, 200, "Request has been processed successfully")
         }

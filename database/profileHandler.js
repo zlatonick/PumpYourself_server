@@ -23,13 +23,13 @@ exports.login = login
 
 
 // Getting all needed info about the user
-function getProfileInfo(connection, user_id, cb) {
+function getProfileInfo(connection, params, cb) {
 
     // Getting firstly the main profile info
     let queryString = "SELECT User_name, User_status FROM Users "
         + "WHERE User_ID = ?";
 
-    connection.query(queryString, [user_id], (err, user_res) => {
+    connection.query(queryString, [params.user_id], (err, user_res) => {
 
         if (err) cb(err);
 
@@ -38,7 +38,7 @@ function getProfileInfo(connection, user_id, cb) {
             + "FROM Friends JOIN Users ON Friends.Second_user_ID = Users.User_ID "
             + "WHERE Friends.First_user_ID = ?";
 
-        connection.query(friendsString, [user_id], (err, fr_res) => {
+        connection.query(friendsString, [params.user_id], (err, fr_res) => {
 
             if (err) cb(err);
 
@@ -48,7 +48,7 @@ function getProfileInfo(connection, user_id, cb) {
                 + "JOIN Users ON Friends_requests.User_ID_from = Users.User_ID "
                 + "WHERE Friends_requests.User_ID_to = ?";
 
-            connection.query(friendsRequestsString, [user_id], (err, frReq_res) => {
+            connection.query(friendsRequestsString, [params.user_id], (err, frReq_res) => {
 
                 if (err) cb(err);
 
@@ -58,99 +58,26 @@ function getProfileInfo(connection, user_id, cb) {
                     + "JOIN Training_groups ON Groups_requests.Group_ID = Training_groups.Group_ID "
                     + "WHERE Groups_requests.User_ID_to = ?";
 
-                connection.query(groupsRequestsString, [user_id], (err, grReq_res) => {
+                connection.query(groupsRequestsString, [params.user_id], (err, grReq_res) => {
 
                     if (err) cb(err);
-
-                    // Initializing an asynchronous queue
-                    let queue = asyncQueueFactory.createQueue();
 
                     // Forming the result
                     let result = {};
 
-                    result.name = user_res[0]['User_name'];
-                    result.status = user_res[0]['User_status'];
-
-                    // Profile photo
-                    queue.addTask({
-                        action: images.getImage,
-                        args: ['users', user_id],
-                        callback: (err, res) => {
-                            if (err) cb(err);
-                            result.photo = res;
-                        }
-                    });
+                    result.User_name = user_res[0]['User_name'];
+                    result.User_status = user_res[0]['User_status'];
 
                     // Forming the friends
-                    result.friends = {};
-
-                    for (line of fr_res) {
-                        
-                        result.friends[line['Friend_ID']] = {
-                            name: line['User_name'],
-                            status: line['User_status']
-                        }
-                        
-                        // Photo
-                        queue.addTask({
-                            action: images.getImage,
-                            args: ['users', line['Friend_ID']],
-                            callback: (err, res, image_id) => {
-                                if (err) cb(err);
-                                result.friends[image_id].photo = res;
-                            }
-                        });
-                    }
+                    result.Friends = fr_res;
 
                     // Forming the notifications
-                    result.notifications = {
-                        friends_requests: {},
-                        groups_requests: {}
+                    result.Notifications = {
+                        Friends_requests: frReq_res,
+                        Groups_requests: grReq_res
                     };
 
-                    // Friends notifications
-                    for (line of frReq_res) {
-                        
-                        result.notifications.friends_requests[line['Friend_ID']] = {
-                            name: line['User_name'],
-                            status: line['User_status']
-                        }
-                        
-                        // Photo
-                        queue.addTask({
-                            action: images.getImage,
-                            args: ['users', line['Friend_ID']],
-                            callback: (err, res, image_id) => {
-                                if (err) cb(err);
-                                result.notifications.friends_requests[image_id].photo = res;
-                            }
-                        });
-                    }
-
-                    // Groups notifications
-                    for (line of grReq_res) {
-                        
-                        result.notifications.groups_requests[line['Group_ID']] = {
-                            name: line['Group_name'],
-                            description: line['Group_description']
-                        }
-                        
-                        // Photo
-                        queue.addTask({
-                            action: images.getImage,
-                            args: ['groups', line['Group_ID']],
-                            callback: (err, res, image_id) => {
-                                if (err) cb(err);
-                                result.notifications.groups_requests[image_id].photo = res;
-                            }
-                        });
-                    }
-
-                    // Adding the callback
-                    queue.addTask({
-                        action: cb,
-                        args: [null, result]
-                    });
+                    cb(null, result);
                 });
             });
         });
@@ -158,80 +85,35 @@ function getProfileInfo(connection, user_id, cb) {
 }
 
 
-function getFriendInfo(connection, user_id, friend_id, cb) {
+function getFriendInfo(connection, params, cb) {
 
     // Getting all the friends
     let friendsString = "SELECT Users.User_ID AS Friend_ID, User_name, User_status "
     + "FROM Friends JOIN Users ON Friends.Second_user_ID = Users.User_ID "
     + "WHERE Friends.First_user_ID = ?";
 
-    connection.query(friendsString, [friend_id], (err, fr_res) => {
+    connection.query(friendsString, [params.friend_id], (err, fr_res) => {
 
         if (err) cb(err);
 
         // Getting all the mutual groups
-        let groupsString = "SELECT Group_id, Group_name, Group_description "
-            + "FROM Training_groups WHERE Group_id IN "
+        let groupsString = "SELECT Group_ID, Group_name, Group_description "
+            + "FROM Training_groups WHERE Group_ID IN "
             + "(SELECT Group_ID FROM Groups_users "
             + "WHERE User_ID = ? AND Group_ID IN "
             + "(SELECT Group_ID FROM Groups_users WHERE User_ID = ?))";
 
-        connection.query(groupsString, [user_id, friend_id], (err, gr_res) => {
+        connection.query(groupsString, [params.user_id, params.friend_id], (err, gr_res) => {
 
             if (err) cb(err);
 
-            // Initializing an asynchronous queue
-            let queue = asyncQueueFactory.createQueue();
-
             // Forming the result
             let result = {
-                friends: {},
-                mutual_groups: {}
+                Friends: fr_res,
+                Mutual_groups: gr_res
             };
-
-            // Forming the friends
-            for (line of fr_res) {
-                        
-                result.friends[line['Friend_ID']] = {
-                    name: line['User_name'],
-                    status: line['User_status']
-                }
-                
-                // Photo
-                queue.addTask({
-                    action: images.getImage,
-                    args: ['users', line['Friend_ID']],
-                    callback: (err, res, image_id) => {
-                        if (err) cb(err);
-                        result.friends[image_id].photo = res;
-                    }
-                });
-            }
-
-            // Forming the mutual groups
-            for (line of gr_res) {
-                        
-                result.mutual_groups[line['Group_id']] = {
-                    name: line['Group_name'],
-                    description: line['Group_description']
-                }
-                
-                // Photo
-                queue.addTask({
-                    action: images.getImage,
-                    args: ['groups', line['Group_id']],
-                    callback: (err, res, image_id) => {
-                        if (err) cb(err);
-                        result.mutual_groups[image_id].photo = res;
-                    }
-                });
-            }
-
-            // Adding the callback
-            queue.addTask({
-                action: cb,
-                args: [null, result]
-            });
+            
+            cb(null, result);
         });
     });
 }
@@ -239,45 +121,47 @@ function getFriendInfo(connection, user_id, friend_id, cb) {
 
 // Search for users by input phrase
 // Returns the shallow user info
-function searchUser(connection, input_phrase, cb) {
+function searchUser(connection, params, cb) {
     
     let queryString = "SELECT User_ID, User_name, User_status FROM Users "
         + "WHERE User_name LIKE ?";
 
-    connection.query(queryString, ['%' + input_phrase + '%'], (err, res) => {
+    connection.query(queryString, ['%' + params.phrase + '%'], (err, res) => {
 
         if (err) cb(err);
 
-        // Initializing an asynchronous queue
-        let queue = asyncQueueFactory.createQueue();
+        cb(null, res);
 
-        // Forming the result
-        let result = {};
+        // // Initializing an asynchronous queue
+        // let queue = asyncQueueFactory.createQueue();
 
-        // Forming the users
-        for (line of res) {
+        // // Forming the result
+        // let result = {};
+
+        // // Forming the users
+        // for (line of res) {
                     
-            result[line['User_ID']] = {
-                name: line['User_name'],
-                status: line['User_status']
-            }
+        //     result[line['User_ID']] = {
+        //         name: line['User_name'],
+        //         status: line['User_status']
+        //     }
             
-            // Photo
-            queue.addTask({
-                action: images.getImage,
-                args: ['users', line['User_ID']],
-                callback: (err, res, image_id) => {
-                    if (err) cb(err);
-                    result[image_id].photo = res;
-                }
-            });
-        }
+        //     // Photo
+        //     queue.addTask({
+        //         action: images.getImage,
+        //         args: ['users', line['User_ID']],
+        //         callback: (err, res, image_id) => {
+        //             if (err) cb(err);
+        //             result[image_id].photo = res;
+        //         }
+        //     });
+        // }
 
-        // Adding the callback
-        queue.addTask({
-            action: cb,
-            args: [null, result]
-        });
+        // // Adding the callback
+        // queue.addTask({
+        //     action: cb,
+        //     args: [null, result]
+        // });
     });
 }
 
@@ -326,19 +210,19 @@ function addNewUser(connection, user_info, cb) {
 }
 
 
-function changeProfileInfo(connection, user_id, user_info, cb) {
+function changeProfileInfo(connection, user_info, cb) {
 
     let queryString = "UPDATE Users SET User_name = ?, User_status = ? "
         + "WHERE User_ID = ?";
 
-    connection.query(queryString, [user_info.name, user_info.status, user_id],
+    connection.query(queryString, [user_info.name, user_info.status, user_info.user_id],
         (err, res) => {
 
         if (err) cb(err);
 
         // Processing the photo
         if (user_info.photo) {            
-            images.saveImage('users', user_id, user_info.photo, (err) => {
+            images.saveImage('users', user_info.user_id, user_info.photo, (err) => {
                 cb(err);
             });
         }
@@ -349,54 +233,54 @@ function changeProfileInfo(connection, user_id, user_info, cb) {
 }
 
 
-function acceptGroupRequest(connection, user_id, group_id, cb) {
+function acceptGroupRequest(connection, params, cb) {
 
     let deleteString = "DELETE FROM Groups_requests WHERE User_ID_to = ? "
         + "AND Group_ID = ?";
 
-    connection.query(deleteString, [user_id, group_id], (err) => {
+    connection.query(deleteString, [params.user_id, params.group_id], (err) => {
     
         if (err) cb(err);
 
         let queryString = "INSERT INTO Groups_users(User_ID, Group_ID) VALUES(?, ?)";
     
-        connection.query(queryString, [user_id, group_id], (err) => {
+        connection.query(queryString, [params.user_id, params.group_id], (err) => {
             cb(err);
         });
     });    
 }
 
 
-function declineGroupRequest(connection, user_id, group_id, cb) {
+function declineGroupRequest(connection, params, cb) {
 
     let deleteString = "DELETE FROM Groups_requests WHERE User_ID_to = ? "
         + "AND Group_ID = ?";
 
-    connection.query(deleteString, [user_id, group_id], (err) => {
+    connection.query(deleteString, [params.user_id, params.group_id], (err) => {
         cb(err);
     });
 }
 
 
-function acceptFriendRequest(connection, user_id, friend_id, cb) {
+function acceptFriendRequest(connection, params, cb) {
 
     let deleteString = "DELETE FROM Friends_requests WHERE User_ID_to = ? "
         + "AND User_ID_from = ?";
 
-    connection.query(deleteString, [user_id, friend_id], (err) => {
+    connection.query(deleteString, [params.user_id, params.friend_id], (err) => {
     
         if (err) cb(err);
 
         let queryString = "INSERT INTO Friends(First_user_ID, Second_user_ID) VALUES(?, ?)";
     
-        connection.query(queryString, [user_id, friend_id], (err) => {
+        connection.query(queryString, [params.user_id, params.friend_id], (err) => {
 
             if (err) cb(err);
 
             // Entry is added twice
             let queryString = "INSERT INTO Friends(First_user_ID, Second_user_ID) VALUES(?, ?)";
         
-            connection.query(queryString, [friend_id, user_id], (err) => {
+            connection.query(queryString, [params.friend_id, params.user_id], (err) => {
                 cb(err);
             });
         });
@@ -404,34 +288,34 @@ function acceptFriendRequest(connection, user_id, friend_id, cb) {
 }
 
 
-function declineFriendRequest(connection, user_id, friend_id, cb) {
+function declineFriendRequest(connection, params, cb) {
 
     let deleteString = "DELETE FROM Friends_requests WHERE User_ID_to = ? "
         + "AND User_ID_from = ?";
 
-    connection.query(deleteString, [user_id, friend_id], (err) => {
+    connection.query(deleteString, [params.user_id, params.friend_id], (err) => {
         cb(err);
     });
 }
 
 
-function sendFriendRequest(connection, user_id, friend_id, cb) {
+function sendFriendRequest(connection, params, cb) {
 
     let queryString = "INSERT INTO Friends_requests(User_ID_from, User_ID_to) "
         + "VALUES(?, ?)";
 
-    connection.query(queryString, [user_id, friend_id], (err) => {
+    connection.query(queryString, [params.user_id, params.friend_id], (err) => {
         cb(err);
     });
 }
 
 
-function removeFriend(connection, user_id, friend_id, cb) {
+function removeFriend(connection, params, cb) {
 
     let deleteString = "DELETE FROM Friends WHERE First_user_ID = ? "
         + "AND Second_user_ID = ?";
 
-    connection.query(deleteString, [user_id, friend_id], (err) => {
+    connection.query(deleteString, [params.user_id, params.friend_id], (err) => {
 
         if (err) cb(err);
 
@@ -439,18 +323,18 @@ function removeFriend(connection, user_id, friend_id, cb) {
         let deleteString = "DELETE FROM Friends WHERE First_user_ID = ? "
             + "AND Second_user_ID = ?";
 
-        connection.query(deleteString, [friend_id, user_id], (err) => {
+        connection.query(deleteString, [params.friend_id, params.user_id], (err) => {
             cb(err);
         });
     });
 }
 
 
-function login(connection, login, password, cb) {
+function login(connection, params, cb) {
 
     let queryString = "SELECT User_ID FROM Users WHERE Login = ? AND Password = ?";
 
-    connection.query(queryString, [login, password], (err, res) => {
+    connection.query(queryString, [params.login, params.password], (err, res) => {
 
         if (err) cb(err);
 

@@ -12,6 +12,7 @@ const foodHandler = require("./foodHandler.js");
 const trainingsHandler = require("./trainingsHandler.js");
 const groupsHandler = require("./groupsHandler.js");
 const profileHandler = require("./profileHandler.js");
+const imagesHandler = require("./dbImagesHandler.js");
 
 
 // Exporting the interface
@@ -84,10 +85,11 @@ function carry(fn, first) {
 
 // Getting the group and id of action and returning the appropriate function
 function getActionByID(group, action) {
+    if (group == 'images') {
+        return carry(imagesHandler.getImageQuery, action);
+    }
     if (actions[group] != null && actions[group][action] != null) {
         return carry(actions[group][action], connection);
     }
-    else {
-        return null;
-    }
+    return null;
 }

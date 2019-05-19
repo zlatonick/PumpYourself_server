@@ -14,88 +14,92 @@ exports.stopTraining = stopTraining;
 
 
 // Get all trainings of the user
-function getAllUserTrainings(connection, user_id, cb) {
+function getAllUserTrainings(connection, params, cb) {
 
     let queryString = "SELECT Start_date, "
-        + "Trainings.Training_id AS Training_id, Training_name, "
+        + "Trainings.Training_ID AS Training_ID, Training_name, "
         + "Training_description, Day_number, Day_plan FROM Trainings_days "
-        + "JOIN Trainings ON Trainings.Training_id = Trainings_days.Training_id "
-        + "JOIN Trainings_users ON Trainings.Training_id = Trainings_users.Training_id "
-        + "WHERE User_id = ?";
+        + "JOIN Trainings ON Trainings.Training_ID = Trainings_days.Training_ID "
+        + "JOIN Trainings_users ON Trainings.Training_ID = Trainings_users.Training_ID "
+        + "WHERE User_ID = ?";
 
-    connection.query(queryString, [user_id], (err, res) => {
+    connection.query(queryString, [params.user_id], (err, res) => {
 
         if (err) cb(err);
 
-        let result = {}
+        cb(null, res);
 
-        for (line of res) {
+        // let result = {}
 
-            let currTrainingId = line['Training_id'];
+        // for (line of res) {
 
-            if (result[currTrainingId]) {
-                result[currTrainingId].days.push({
-                    day_number: line['Day_number'],
-                    day_plan: line['Day_plan']
-                });
-            }
-            else {
-                result[currTrainingId] = {
-                    name: line['Training_name'],
-                    description: line['Training_description'],
-                    start_date: dates.getDay(line['Start_date']),
-                    days: [{
-                        day_number: line['Day_number'],
-                        day_plan: line['Day_plan']
-                    }]
-                };
-            }
-        }
-        cb(null, result);
+        //     let currTrainingId = line['Training_id'];
+
+        //     if (result[currTrainingId]) {
+        //         result[currTrainingId].days.push({
+        //             day_number: line['Day_number'],
+        //             day_plan: line['Day_plan']
+        //         });
+        //     }
+        //     else {
+        //         result[currTrainingId] = {
+        //             name: line['Training_name'],
+        //             description: line['Training_description'],
+        //             start_date: dates.getDay(line['Start_date']),
+        //             days: [{
+        //                 day_number: line['Day_number'],
+        //                 day_plan: line['Day_plan']
+        //             }]
+        //         };
+        //     }
+        // }
+        // cb(null, result);
     });
 }
 
 
 // Get trainings, that are available to all users
-function getAllPublicTrainings(connection, cb) {
+function getAllPublicTrainings(connection, params, cb) {
 
-    let queryString = "SELECT Trainings.Training_id AS Training_id, Training_name, "
+    let queryString = "SELECT Trainings.Training_ID AS Training_ID, Training_name, "
         + "Training_description, Day_number, Day_plan FROM Trainings_days "
-        + "JOIN Trainings ON Trainings.Training_id = Trainings_days.Training_id "
+        + "JOIN Trainings ON Trainings.Training_ID = Trainings_days.Training_ID "
         + "WHERE Trainings.Is_public = 1";
 
     connection.query(queryString, (err, res) => {
         
         if (err) cb(err);
+        
+        cb(null, res);
 
-        // All public trainings
-        let trainings = {};
+        // // All public trainings
+        // let trainings = {};
 
-        for (line of res) {
+        // for (line of res) {
 
-            let currTrainingId = line['Training_id'];
+        //     let currTrainingId = line['Training_id'];
 
-            // Adding the day to the training
-            if (trainings[currTrainingId]) {
-                trainings[currTrainingId].days.push({
-                    day_number: line['Day_number'],
-                    day_plan: line['Day_plan']
-                });
-            }
-            else {
-                // Creating the training and adding the day
-                trainings[currTrainingId] = {
-                    name: line['Training_name'],
-                    description: line['Training_description'],
-                    days: [{
-                        day_number: line['Day_number'],
-                        day_plan: line['Day_plan']
-                    }]
-                };
-            }
-        }
+        //     // Adding the day to the training
+        //     if (trainings[currTrainingId]) {
+        //         trainings[currTrainingId].days.push({
+        //             day_number: line['Day_number'],
+        //             day_plan: line['Day_plan']
+        //         });
+        //     }
+        //     else {
+        //         // Creating the training and adding the day
+        //         trainings[currTrainingId] = {
+        //             name: line['Training_name'],
+        //             description: line['Training_description'],
+        //             days: [{
+        //                 day_number: line['Day_number'],
+        //                 day_plan: line['Day_plan']
+        //             }]
+        //         };
+        //     }
+        // }
 
-        cb(null, trainings);
+        // cb(null, trainings);
     });
 }
 
@@ -106,7 +110,8 @@ function createTraining(connection, training, cb) {
     let queryString = "INSERT INTO Trainings(Training_name, Training_description, "
         + "Is_public) VALUES(?, ?, 0)";
 
-    connection.query(queryString, [training.name, training.description], (err, res) => {
+    connection.query(queryString, [training[0].training_name, training[0].training_description],
+        (err, res) => {
 
         if (err) cb(err);
 
@@ -115,9 +120,9 @@ function createTraining(connection, training, cb) {
         // Creating the asynchronous queue and putting there all the insert queries
         let asyncQueue = asyncQueueFactory.createQueue();
 
-        for (day of training.days) {
+        for (day of training) {
 
-            let queryString = "INSERT INTO Trainings_days(Training_id, Day_number, Day_plan) "
+            let queryString = "INSERT INTO Trainings_days(Training_ID, Day_number, Day_plan) "
                 + "VALUES(?, ?, ?)";
 
             asyncQueue.addTask({
@@ -137,23 +142,24 @@ function createTraining(connection, training, cb) {
 
 
 // Subscribe on the training
-function startTraining(connection, user_id, training_id, date, cb) {
+function startTraining(connection, params, cb) {
 
-    let queryString = "INSERT INTO Trainings_users(User_id, Training_id, Start_date) "
+    let queryString = "INSERT INTO Trainings_users(User_ID, Training_ID, Start_date) "
         + "VALUES(?, ?, ?)";
 
-    connection.query(queryString, [user_id, training_id, date], (err) => {
+    connection.query(queryString, [params.user_id, params.training_id, params.date],
+        (err) => {
         cb(err);
     });
 }
 
 
 // Stop the training plan
-function stopTraining(connection, user_id, training_id, cb) {
+function stopTraining(connection, params, cb) {
 
-    let queryString = "DELETE FROM Trainings_users WHERE User_id = ? AND Training_id = ?";
+    let queryString = "DELETE FROM Trainings_users WHERE User_ID = ? AND Training_ID = ?";
 
-    connection.query(queryString, [user_id, training_id], (err) => {
+    connection.query(queryString, [params.user_id, params.training_id], (err) => {
         cb(err);
     });
 }
