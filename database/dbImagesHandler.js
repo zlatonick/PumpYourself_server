@@ -29,7 +29,7 @@ function getImage(category, id, cb) {
 
 
 function saveImage(category, id, image, cb) {
-    fs.writeFile(getPath(category, id), Buffer.from(image.data), (err) => {
+    fs.writeFile(getPath(category, id), Buffer.from(image), (err) => {
         cb(err);
     });
 }
