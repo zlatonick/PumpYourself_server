@@ -29,7 +29,7 @@ function getImage(category, id, cb) {
 
 
 function saveImage(category, id, image, cb) {
-    fs.writeFile(getPath(category, id), Buffer.from(image), (err) => {
+    fs.writeFile(getPath(category, id), Buffer.from(image, 'base64'), (err) => {
         cb(err);
     });
 }

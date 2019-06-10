@@ -12,6 +12,8 @@ const dbHandler = require('./database/dbHandler.js');
 
 const server = http.createServer((request, response) => {
 
+    console.log('Received a request from ip ' + request.connection.remoteAddress);
+
     // Parsing the URL of received query
     const incomingUrl = new URL(request.url, 'https://example.org/');
 
@@ -38,7 +40,7 @@ const server = http.createServer((request, response) => {
         });
 
         // Forming the task and executing it
-        task = formTask(group, action, params, response);
+        task = formTask(group, action, params, incomingUrl.path, response);
         
         if (task) {
             asyncQueue.addTask(task);
@@ -64,7 +66,7 @@ const server = http.createServer((request, response) => {
                 if (reqBody) {
 
                     // Forming the task
-                    let task = formTask(group, action, reqBody, response);
+                    let task = formTask(group, action, reqBody, incomingUrl.path, response);
         
                     if (task) {
                         asyncQueue.addTask(task);
@@ -117,7 +119,7 @@ function safeJsonParse(line) {
 
 
 // Forming the correct task for asynchronous queue
-function formTask(group, actionId, reqBody, response) {
+function formTask(group, actionId, reqBody, reqUrl, response) {
 
     let receivedAction = dbHandler.getActionByID(group, actionId);
 
@@ -128,17 +130,17 @@ function formTask(group, actionId, reqBody, response) {
     return {
         action: receivedAction,
         args: [reqBody],
-        callback: formServerResponse(response)
+        callback: formServerResponse(reqUrl, response)
     }
 }
 
 
 // Forming the server response
-function formServerResponse(response) {
+function formServerResponse(reqUrl, response) {
     return (err, res, type) => {
 
         if (err) {
-            finishResponse(response, 404, err.toString());
+            finishResponse(response, 404, err.toString(), reqUrl);
         }
         else {
 
@@ -157,7 +159,7 @@ function formServerResponse(response) {
                 }
             }            
 
-            finishResponse(response, 200, "Request has been processed successfully")
+            finishResponse(response, 200, "Request has been processed successfully", reqUrl)
         }
 
         response.end();
