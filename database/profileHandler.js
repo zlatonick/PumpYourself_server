@@ -72,10 +72,8 @@ function getProfileInfo(connection, params, cb) {
                     result.Friends = fr_res;
 
                     // Forming the notifications
-                    result.Notifications = {
-                        Friends_requests: frReq_res,
-                        Groups_requests: grReq_res
-                    };
+                    result.Friends_requests = frReq_res;
+                    result.Groups_requests = grReq_res;
 
                     cb(null, result);
                 });

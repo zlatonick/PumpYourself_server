@@ -365,24 +365,22 @@
 {
     User_name: <String>                  // имя пользователя
     User_status: <String>                // статус пользователя
-    Notifications: {                // уведомления
-        Friends_requests: [         // запросы на добавление в друзья
-            {
-                Friend_ID: <Number>                  // идентификатор пользователя друга
-                User_name: <String>                  // имя друга
-                User_status: <String>                // статус друга
-            },
-            ...
-        ]
-        Groups_requests: [         // приглашения в группу
-            {
-                Group_ID: <Number>                    // идентификатор группы
-                Group_name: <String>                  // имя группы
-                Group_description: <String>           // описание группы
-            },
-            ...
-        ]
-    }
+    Friends_requests: [         // запросы на добавление в друзья
+        {
+            Friend_ID: <Number>                  // идентификатор пользователя друга
+            User_name: <String>                  // имя друга
+            User_status: <String>                // статус друга
+        },
+        ...
+    ]
+    Groups_requests: [         // приглашения в группу
+        {
+            Group_ID: <Number>                    // идентификатор группы
+            Group_name: <String>                  // имя группы
+            Group_description: <String>           // описание группы
+        },
+        ...
+    ]
     Friends: [                      // друзья
         {
             Friend_ID: <Number>                  // идентификатор пользователя друга
