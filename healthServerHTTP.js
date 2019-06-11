@@ -17,6 +17,8 @@ const server = http.createServer((request, response) => {
     // Parsing the URL of received query
     const incomingUrl = new URL(request.url, 'https://example.org/');
 
+    let incomingUrlPath = incomingUrl.pathname + incomingUrl.search;
+
     // Determining the type of query
     let urlParts = incomingUrl.pathname.split('/');
     urlParts.shift();       // Removing first empty string
@@ -26,7 +28,7 @@ const server = http.createServer((request, response) => {
 
     if (group == null || action == null) {
         finishResponse(response, 404, "Incorrect URL. Missing group or action",
-            incomingUrl.path);
+            incomingUrlPath);
         return;
     }
     
@@ -40,13 +42,13 @@ const server = http.createServer((request, response) => {
         });
 
         // Forming the task and executing it
-        task = formTask(group, action, params, incomingUrl.path, response);
+        task = formTask(group, action, params, incomingUrlPath, response);
         
         if (task) {
             asyncQueue.addTask(task);
         }
         else {
-            finishResponse(response, 404, "Incorrect URL", incomingUrl.path);
+            finishResponse(response, 404, "Incorrect URL", incomingUrlPath);
             return;
         }
     }
@@ -56,7 +58,7 @@ const server = http.createServer((request, response) => {
         getRequestBody(request, (err, body) => {
 
             if (err) {
-                finishResponse(response, 404, "Bad request", incomingUrl.path);
+                finishResponse(response, 404, "Bad request", incomingUrlPath);
             }
             else {
 
@@ -66,18 +68,18 @@ const server = http.createServer((request, response) => {
                 if (reqBody) {
 
                     // Forming the task
-                    let task = formTask(group, action, reqBody, incomingUrl.path, response);
+                    let task = formTask(group, action, reqBody, incomingUrlPath, response);
         
                     if (task) {
                         asyncQueue.addTask(task);
                     }
                     else {
-                        finishResponse(response, 404, "Incorrect URL", incomingUrl.path);
+                        finishResponse(response, 404, "Incorrect URL", incomingUrlPath);
                         return;
                     }
                 }
                 else {
-                    finishResponse(response, 404, "Error while parsing JSON", incomingUrl.path);
+                    finishResponse(response, 404, "Error while parsing JSON", incomingUrlPath);
                     return;
                 }
             }
@@ -161,8 +163,6 @@ function formServerResponse(reqUrl, response) {
 
             finishResponse(response, 200, "Request has been processed successfully", reqUrl)
         }
-
-        response.end();
     }
 }
 
