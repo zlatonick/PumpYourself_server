@@ -266,7 +266,7 @@ function editEating(connection, params, cb) {
                 let queryString = "UPDATE Dishes_eats SET Dish_ID = ?, Weight = ? "
                 + "WHERE User_dish_ID = ?";
 
-            connection.query(queryString, [dish_id, params.weight, photo_id, params.user_dish_id],
+            connection.query(queryString, [dish_id, params.weight, params.user_dish_id],
                 (err) => {
                 cb(err);
             });
